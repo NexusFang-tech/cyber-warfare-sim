@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BLACKSITE — Cyber Warfare Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Chakra+Petch:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+--r:#ff0040;--o:#ff6600;--y:#ffcc00;--g:#00ff66;--c:#00ccff;--b:#0055ff;
+--p:#8800ff;--pk:#ff0088;--w:#ffffff;
+--bg0:#000005;--bg1:#06060f;--bg2:#0c0c1a;--bg3:#141428;--bg4:#1c1c36;
+--bdr:rgba(0,204,255,0.12);--bdr2:rgba(255,0,64,0.15);
+--t1:#d4d4e8;--t2:#8888aa;--t3:#555570;
+--fd:'Black Ops One',system-ui;--fb:'Chakra Petch',sans-serif;--fm:'JetBrains Mono',monospace;
+}
+html{font-size:13px}
+body{background:var(--bg0);color:var(--t1);font-family:var(--fb);overflow:hidden;height:100vh}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:var(--bg0)}::-webkit-scrollbar-thumb{background:var(--c);border-radius:2px}
+::selection{background:var(--r);color:#fff}
+button{cursor:pointer;font-family:var(--fb)}
+input,textarea,select{font-family:var(--fm);background:var(--bg1);border:1px solid var(--bdr);color:var(--t1);padding:0.45rem 0.65rem;font-size:0.75rem;border-radius:2px;outline:none;transition:border-color 0.3s}
+input:focus,textarea:focus,select:focus{border-color:var(--c);box-shadow:0 0 8px rgba(0,204,255,0.2)}
+
+/* BOOT */
+#boot{position:fixed;inset:0;z-index:99999;background:var(--bg0);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.8s}
+#boot.off{opacity:0;pointer-events:none}
+.boot-brand{font-family:var(--fd);font-size:3.5rem;letter-spacing:0.3em;margin-bottom:0.3rem}
+.boot-brand .b1{color:var(--r)}.boot-brand .b2{color:var(--c)}
+.boot-tag{font-family:var(--fm);font-size:0.6rem;color:var(--t3);letter-spacing:0.5em;margin-bottom:2.5rem}
+#bTerm{font-family:var(--fm);font-size:0.65rem;color:var(--c);width:min(550px,85vw);line-height:1.8;max-height:180px;overflow:hidden;opacity:0.85}
+#bTerm div{opacity:0;animation:bIn 0.2s forwards}
+@keyframes bIn{to{opacity:1}}
+.bBar{width:min(350px,70vw);height:2px;background:var(--bg3);margin-top:2rem;border-radius:1px;overflow:hidden}
+.bBar div{height:100%;width:0;background:linear-gradient(90deg,var(--c),var(--r));transition:width 0.15s}
+
+/* SHELL */
+.sh{display:grid;grid-template-rows:40px 1fr;height:100vh;opacity:0;transition:opacity 0.6s 0.2s}
+.sh.on{opacity:1}
+.top{background:var(--bg1);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 0.75rem;gap:0.75rem;z-index:50}
+.logo{font-family:var(--fd);font-size:0.8rem;letter-spacing:0.12em;white-space:nowrap}
+.logo .l1{color:var(--r)}.logo .l2{color:var(--c)}
+.sep{width:1px;height:18px;background:linear-gradient(transparent,var(--c),transparent)}
+.nav{display:flex;gap:1px;flex:1}
+.nb{padding:0.3rem 0.85rem;font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;border:none;background:transparent;color:var(--t3);border-bottom:2px solid transparent;transition:all 0.2s}
+.nb:hover{color:var(--t2);background:rgba(0,204,255,0.03)}
+.nb.on{color:var(--c);border-bottom-color:var(--c)}
+.nb[data-p="warroom"].on{color:var(--r);border-bottom-color:var(--r)}
+.nb[data-p="ransim"].on{color:var(--o);border-bottom-color:var(--o)}
+.nb[data-p="osint"].on{color:var(--g);border-bottom-color:var(--g)}
+.nb[data-p="ctf"].on{color:var(--y);border-bottom-color:var(--y)}
+.clk{font-family:var(--fd);font-size:0.7rem;color:var(--c);letter-spacing:0.08em}
+
+/* PANELS */
+.pnls{overflow:hidden;position:relative}
+.pn{position:absolute;inset:0;overflow-y:auto;opacity:0;pointer-events:none;transition:opacity 0.25s}
+.pn.on{opacity:1;pointer-events:all}
+
+/* SHARED */
+.cd{background:var(--bg1);border:1px solid var(--bdr);border-radius:3px;overflow:hidden}
+.cd-h{padding:0.5rem 0.8rem;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;background:var(--bg2)}
+.cd-h h3{font-family:var(--fd);font-size:0.55rem;letter-spacing:0.18em;color:var(--c)}
+.cd-b{padding:0.8rem}
+.btn{padding:0.35rem 0.8rem;font-size:0.65rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;border:1px solid;border-radius:2px;background:transparent;transition:all 0.25s}
+.btn-r{border-color:var(--r);color:var(--r)}.btn-r:hover{background:rgba(255,0,64,0.1);box-shadow:0 0 12px rgba(255,0,64,0.3)}
+.btn-c{border-color:var(--c);color:var(--c)}.btn-c:hover{background:rgba(0,204,255,0.1);box-shadow:0 0 12px rgba(0,204,255,0.3)}
+.btn-g{border-color:var(--g);color:var(--g)}.btn-g:hover{background:rgba(0,255,102,0.1);box-shadow:0 0 12px rgba(0,255,102,0.3)}
+.btn-y{border-color:var(--y);color:var(--y)}.btn-y:hover{background:rgba(255,204,0,0.1);box-shadow:0 0 12px rgba(255,204,0,0.3)}
+.btn-o{border-color:var(--o);color:var(--o)}.btn-o:hover{background:rgba(255,102,0,0.1);box-shadow:0 0 12px rgba(255,102,0,0.3)}
+.btn-sm{padding:0.2rem 0.5rem;font-size:0.55rem}
+.bg{display:inline-block;padding:0.12rem 0.45rem;font-size:0.5rem;font-weight:700;letter-spacing:0.08em;border-radius:2px;font-family:var(--fm);text-transform:uppercase}
+.bg-r{background:rgba(255,0,64,0.15);color:var(--r);border:1px solid rgba(255,0,64,0.3)}
+.bg-o{background:rgba(255,102,0,0.15);color:var(--o);border:1px solid rgba(255,102,0,0.3)}
+.bg-y{background:rgba(255,204,0,0.12);color:var(--y);border:1px solid rgba(255,204,0,0.3)}
+.bg-g{background:rgba(0,255,102,0.1);color:var(--g);border:1px solid rgba(0,255,102,0.25)}
+.bg-c{background:rgba(0,204,255,0.1);color:var(--c);border:1px solid rgba(0,204,255,0.25)}
+.bg-p{background:rgba(136,0,255,0.12);color:var(--p);border:1px solid rgba(136,0,255,0.3)}
+.tg{display:inline-block;padding:0.08rem 0.35rem;font-size:0.45rem;background:rgba(136,0,255,0.08);border:1px solid rgba(136,0,255,0.2);border-radius:2px;color:var(--p);margin:0.08rem}
+.sec{font-family:var(--fd);font-size:0.6rem;letter-spacing:0.18em;color:var(--p);margin-bottom:0.65rem;display:flex;align-items:center;gap:0.5rem}
+.sec::before{content:'';width:10px;height:2px;background:currentColor}
+.pb{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}.pb div{height:100%;border-radius:2px;transition:width 0.6s}
+.anim-in{animation:aIn 0.35s ease}
+@keyframes aIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== WAR ROOM ===== */
+.wr{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr auto;height:calc(100vh - 40px);gap:1px;background:var(--bdr2)}
+.wr-head{grid-column:1/-1;background:var(--bg1);padding:0.75rem 1rem;display:flex;align-items:center;justify-content:space-between}
+.wr-score{display:flex;gap:2rem;align-items:center}
+.wr-team{text-align:center}
+.wr-team-name{font-family:var(--fd);font-size:0.6rem;letter-spacing:0.15em;margin-bottom:0.2rem}
+.wr-team-score{font-family:var(--fd);font-size:2rem}
+.wr-vs{font-family:var(--fd);font-size:0.8rem;color:var(--t3);letter-spacing:0.2em}
+.wr-timer{font-family:var(--fd);font-size:1.2rem;color:var(--y);letter-spacing:0.1em}
+.wr-col{background:var(--bg0);overflow-y:auto;padding:0.75rem}
+.wr-red{border-right:2px solid rgba(255,0,64,0.3)}.wr-blue{border-left:2px solid rgba(0,204,255,0.3)}
+.wr-bottom{grid-column:1/-1;background:var(--bg1);padding:0.5rem 1rem;display:flex;gap:0.5rem;align-items:center}
+.atk-card{background:var(--bg2);border:1px solid var(--bdr2);border-radius:3px;padding:0.6rem;margin-bottom:0.4rem;animation:aIn 0.3s;border-left:3px solid}
+.def-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:3px;padding:0.6rem;margin-bottom:0.4rem;animation:aIn 0.3s;border-left:3px solid var(--c)}
+.wr-event{display:flex;gap:0.5rem;align-items:flex-start;padding:0.4rem 0;border-bottom:1px solid rgba(255,255,255,0.03);font-size:0.65rem}
+.net-node{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:50%;border:2px solid var(--bdr);font-size:0.5rem;font-family:var(--fm);text-align:center;transition:all 0.5s;position:relative}
+.net-node.compromised{border-color:var(--r);box-shadow:0 0 15px rgba(255,0,64,0.4);color:var(--r)}
+.net-node.defended{border-color:var(--g);box-shadow:0 0 15px rgba(0,255,102,0.4);color:var(--g)}
+.net-node.target{border-color:var(--y);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 5px rgba(255,204,0,0.3)}50%{box-shadow:0 0 20px rgba(255,204,0,0.6)}}
+.net-map{display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;padding:0.5rem}
+
+/* ===== RANSOMWARE SIM ===== */
+.rs{display:grid;grid-template-columns:300px 1fr 260px;height:calc(100vh - 40px);gap:1px;background:var(--bdr)}
+.rs-col{background:var(--bg0);overflow-y:auto;padding:1rem}
+.kill-chain{position:relative;padding-left:1.5rem}
+.kc-line{position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--bg3)}
+.kc-step{position:relative;margin-bottom:0.8rem;padding:0.55rem 0.7rem;background:var(--bg1);border:1px solid var(--bdr);border-radius:3px;transition:all 0.4s;cursor:pointer}
+.kc-step::before{content:'';position:absolute;left:-1.5rem;top:50%;transform:translate(-50%,-50%) translateX(8px);width:14px;height:14px;border-radius:50%;border:2px solid var(--t3);background:var(--bg0);z-index:1;transition:all 0.4s}
+.kc-step.done::before{background:var(--r);border-color:var(--r);box-shadow:0 0 10px rgba(255,0,64,0.5)}
+.kc-step.active::before{background:var(--o);border-color:var(--o);box-shadow:0 0 10px rgba(255,102,0,0.6);animation:pulse 1.5s infinite}
+.kc-step.done{border-color:rgba(255,0,64,0.3)}.kc-step.active{border-color:var(--o)}
+.kc-name{font-family:var(--fd);font-size:0.55rem;letter-spacing:0.12em}
+.kc-desc{font-size:0.6rem;color:var(--t2);margin-top:0.2rem;line-height:1.4}
+.file-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:0.35rem}
+.file-node{background:var(--bg2);border:1px solid var(--bdr);border-radius:3px;padding:0.4rem;text-align:center;font-size:0.5rem;transition:all 0.4s;cursor:default;overflow:hidden}
+.file-node .icon{font-size:1.2rem;margin-bottom:0.2rem}
+.file-node .fname{color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-node.encrypted{border-color:var(--r);background:rgba(255,0,64,0.08);animation:encFlash 0.5s}
+.file-node.encrypted .icon{filter:hue-rotate(180deg) saturate(3)}
+.file-node.encrypted .fname{color:var(--r);text-decoration:line-through}
+@keyframes encFlash{0%{background:rgba(255,0,64,0.3)}100%{background:rgba(255,0,64,0.08)}}
+.rs-counter{font-family:var(--fd);font-size:2rem;text-align:center;margin:0.5rem 0}
+.ransom-note{background:#111;border:2px solid var(--r);border-radius:4px;padding:1rem;font-family:var(--fm);font-size:0.65rem;color:var(--r);line-height:1.6;display:none;animation:aIn 0.5s}
+
+/* ===== OSINT TERMINAL ===== */
+.os{display:grid;grid-template-columns:1fr 350px;height:calc(100vh - 40px);gap:1px;background:var(--bdr)}
+.os-col{background:var(--bg0);overflow-y:auto}
+.term{background:#000;padding:0.75rem;font-family:var(--fm);font-size:0.7rem;height:100%;display:flex;flex-direction:column}
+.term-out{flex:1;overflow-y:auto;line-height:1.7;white-space:pre-wrap;word-break:break-all}
+.term-out .t-c{color:var(--c)}.term-out .t-g{color:var(--g)}.term-out .t-r{color:var(--r)}.term-out .t-y{color:var(--y)}.term-out .t-p{color:var(--p)}.term-out .t-d{color:var(--t3)}.term-out .t-w{color:#fff}
+.term-in{display:flex;align-items:center;gap:0.3rem;margin-top:0.5rem;border-top:1px solid rgba(0,204,255,0.1);padding-top:0.5rem}
+.term-prompt{color:var(--g);white-space:nowrap}
+.term-input{flex:1;background:none;border:none;color:var(--t1);font-family:var(--fm);font-size:0.7rem;outline:none;caret-color:var(--g)}
+.os-sidebar{padding:1rem}
+.dossier{background:var(--bg1);border:1px solid var(--bdr);border-radius:3px;margin-bottom:0.75rem}
+.dossier-head{padding:0.5rem 0.7rem;border-bottom:1px solid var(--bdr);background:var(--bg2)}
+.dossier-body{padding:0.7rem;font-size:0.65rem;line-height:1.7}
+.d-row{display:flex;justify-content:space-between;padding:0.15rem 0;border-bottom:1px solid rgba(255,255,255,0.02)}
+.d-label{color:var(--t3)}.d-val{color:var(--c);text-align:right;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.breach-item{background:var(--bg2);border:1px solid var(--bdr2);border-radius:3px;padding:0.5rem;margin-bottom:0.35rem;font-size:0.6rem}
+
+/* ===== CTF ===== */
+.ctf{display:grid;grid-template-columns:280px 1fr 250px;height:calc(100vh - 40px);gap:1px;background:var(--bdr)}
+.ctf-col{background:var(--bg0);overflow-y:auto;padding:1rem}
+.ctf-cat{margin-bottom:1rem}
+.ctf-cat-title{font-family:var(--fd);font-size:0.55rem;letter-spacing:0.15em;margin-bottom:0.4rem;display:flex;align-items:center;gap:0.4rem}
+.chall{background:var(--bg1);border:1px solid var(--bdr);border-radius:3px;padding:0.5rem 0.7rem;margin-bottom:0.3rem;cursor:pointer;transition:all 0.25s}
+.chall:hover{border-color:var(--y);box-shadow:0 0 10px rgba(255,204,0,0.1)}
+.chall.solved{border-color:var(--g);opacity:0.7}.chall.solved::after{content:' ✓';color:var(--g)}
+.chall.active{border-color:var(--y);background:rgba(255,204,0,0.03)}
+.chall-pts{font-family:var(--fd);font-size:0.55rem}
+.ctf-main{background:var(--bg0);padding:1.5rem}
+.ctf-challenge{display:none}.ctf-challenge.on{display:block}
+.ctf-desc{font-size:0.75rem;line-height:1.7;color:var(--t2);margin-bottom:1rem;background:var(--bg1);border:1px solid var(--bdr);border-radius:3px;padding:1rem}
+.ctf-hints{margin-bottom:1rem}
+.hint-btn{font-size:0.6rem;padding:0.25rem 0.6rem;margin-right:0.3rem;margin-bottom:0.3rem}
+.hint-text{font-size:0.65rem;color:var(--y);background:rgba(255,204,0,0.05);border:1px solid rgba(255,204,0,0.2);border-radius:3px;padding:0.5rem;margin-top:0.3rem;display:none}
+.flag-input{display:flex;gap:0.5rem;margin-top:1rem}
+.flag-input input{flex:1}
+.lb-row{display:flex;justify-content:space-between;padding:0.35rem 0.5rem;border-bottom:1px solid rgba(255,255,255,0.03);font-size:0.65rem;align-items:center}
+.lb-rank{font-family:var(--fd);font-size:0.7rem;width:24px}
+.lb-name{flex:1;margin-left:0.5rem}.lb-pts{font-family:var(--fd);color:var(--y)}
+.lb-row:nth-child(1) .lb-rank{color:var(--y)}.lb-row:nth-child(2) .lb-rank{color:var(--t2)}.lb-row:nth-child(3) .lb-rank{color:var(--o)}
+
+/* RESPONSIVE */
+@media(max-width:1000px){.wr,.rs,.os,.ctf{grid-template-columns:1fr!important}.wr-head{flex-wrap:wrap;gap:0.5rem;justify-content:center}.rs-col:first-child,.ctf-col:first-child,.ctf-col:last-child,.os-col:last-child{display:none}}
+</style>
+</head>
+<body>
+
+<div id="boot">
+  <div class="boot-brand"><span class="b1">BLACK</span><span class="b2">SITE</span></div>
+  <div class="boot-tag">Cyber Warfare Simulator</div>
+  <div id="bTerm"></div>
+  <div class="bBar"><div id="bFill"></div></div>
+</div>
+
+<div class="sh" id="sh">
+  <div class="top">
+    <div class="logo"><span class="l1">BLACK</span><span class="l2">SITE</span></div>
+    <div class="sep"></div>
+    <div class="nav">
+      <button class="nb on" data-p="warroom">War Room</button>
+      <button class="nb" data-p="ransim">Ransomware Sim</button>
+      <button class="nb" data-p="osint">OSINT Terminal</button>
+      <button class="nb" data-p="ctf">CTF Arena</button>
+    </div>
+    <div class="clk" id="clk">00:00:00</div>
+  </div>
+
+  <div class="pnls">
+    <!-- ===== WAR ROOM ===== -->
+    <div class="pn on" id="p-warroom">
+      <div class="wr">
+        <div class="wr-head">
+          <div class="wr-score">
+            <div class="wr-team"><div class="wr-team-name" style="color:var(--r)">RED TEAM</div><div class="wr-team-score" style="color:var(--r)" id="redScore">0</div></div>
+            <div class="wr-vs">VS</div>
+            <div class="wr-team"><div class="wr-team-name" style="color:var(--c)">BLUE TEAM</div><div class="wr-team-score" style="color:var(--c)" id="blueScore">0</div></div>
+          </div>
+          <div>
+            <div class="wr-timer" id="wrTimer">15:00</div>
+            <div style="font-size:0.55rem;color:var(--t3);text-align:center;letter-spacing:0.1em;margin-top:0.2rem">ROUND TIMER</div>
+          </div>
+          <div style="display:flex;gap:0.5rem">
+            <button class="btn btn-r btn-sm" onclick="startWar()">Start Battle</button>
+            <button class="btn btn-c btn-sm" onclick="resetWar()">Reset</button>
+          </div>
+        </div>
+        <div class="wr-col wr-red" id="redCol">
+          <div class="sec" style="color:var(--r)">Red Team — Attack Log</div>
+          <div id="redLog"></div>
+        </div>
+        <div class="wr-col wr-blue" id="blueCol">
+          <div class="sec" style="color:var(--c)">Blue Team — Defense Log</div>
+          <div id="blueLog"></div>
+        </div>
+        <div class="wr-bottom">
+          <div style="font-size:0.55rem;color:var(--t3);letter-spacing:0.1em;margin-right:0.5rem">NETWORK:</div>
+          <div class="net-map" id="netMap"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RANSOMWARE SIM ===== -->
+    <div class="pn" id="p-ransim">
+      <div class="rs">
+        <div class="rs-col">
+          <div class="sec" style="color:var(--o)">Kill Chain Progression</div>
+          <div class="kill-chain" id="killChain"><div class="kc-line"></div></div>
+          <button class="btn btn-o" style="width:100%;margin-top:1rem" onclick="startRansomware()">▶ Launch Attack Simulation</button>
+          <button class="btn btn-c btn-sm" style="width:100%;margin-top:0.5rem" onclick="resetRansomware()">Reset Simulation</button>
+          <div class="ransom-note" id="ransomNote">
+            <div style="text-align:center;font-family:var(--fd);font-size:0.8rem;margin-bottom:0.5rem">⚠ ALL YOUR FILES HAVE BEEN ENCRYPTED ⚠</div>
+            Your important files have been encrypted with military-grade AES-256 + RSA-2048 encryption.<br><br>
+            To recover your files, you must pay 2.5 BTC to the following wallet:<br>
+            <span style="color:var(--y)">bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</span><br><br>
+            You have <span style="color:var(--y)">72 HOURS</span> before the price doubles.<br>
+            After 7 days, your decryption key will be permanently destroyed.<br><br>
+            <div style="font-size:0.55rem;color:var(--t3)">— This is a simulation. No real encryption occurred. —</div>
+          </div>
+        </div>
+        <div class="rs-col">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+            <div class="sec" style="color:var(--o);margin-bottom:0">File System Visualization</div>
+            <div style="display:flex;gap:1rem;font-size:0.6rem;font-family:var(--fm)">
+              <span>Encrypted: <span style="color:var(--r)" id="encCount">0</span></span>
+              <span>Safe: <span style="color:var(--g)" id="safeCount">0</span></span>
+            </div>
+          </div>
+          <div class="pb mb-sm" id="encBar" style="margin-bottom:0.75rem"><div style="width:0;background:var(--r)"></div></div>
+          <div class="file-grid" id="fileGrid"></div>
+        </div>
+        <div class="rs-col">
+          <div class="sec" style="color:var(--o)">Attack Log</div>
+          <div id="rsLog" style="font-family:var(--fm);font-size:0.6rem;line-height:1.7"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== OSINT TERMINAL ===== -->
+    <div class="pn" id="p-osint">
+      <div class="os">
+        <div class="os-col">
+          <div class="term">
+            <div class="term-out" id="tOut"><span class="t-c">BLACKSITE OSINT Terminal v2.0</span>
+<span class="t-d">Type 'help' for available commands</span>
+<span class="t-d">─────────────────────────────────</span>
+</div>
+            <div class="term-in">
+              <span class="term-prompt">osint@blacksite:~$</span>
+              <input class="term-input" id="tIn" spellcheck="false" autofocus>
+            </div>
+          </div>
+        </div>
+        <div class="os-col os-sidebar" id="osSide">
+          <div class="sec" style="color:var(--g)">Intelligence Dossier</div>
+          <div id="dossierContent">
+            <div style="font-size:0.65rem;color:var(--t3);text-align:center;padding:2rem 0">Run a scan to populate dossier</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CTF ===== -->
+    <div class="pn" id="p-ctf">
+      <div class="ctf">
+        <div class="ctf-col">
+          <div class="sec" style="color:var(--y)">Challenges</div>
+          <div id="challList"></div>
+        </div>
+        <div class="ctf-col ctf-main" id="ctfMain">
+          <div style="text-align:center;padding:3rem 1rem;color:var(--t3)">
+            <div style="font-family:var(--fd);font-size:1rem;letter-spacing:0.2em;margin-bottom:0.5rem;color:var(--y)">CTF ARENA</div>
+            <div style="font-size:0.7rem">Select a challenge to begin</div>
+          </div>
+        </div>
+        <div class="ctf-col">
+          <div class="sec" style="color:var(--y)">Leaderboard</div>
+          <div id="leaderboard"></div>
+          <div class="sec" style="color:var(--y);margin-top:1.5rem">Your Stats</div>
+          <div id="playerStats"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const S=ms=>new Promise(r=>setTimeout(r,ms));
+const P=a=>a[Math.floor(Math.random()*a.length)];
+const R=(a,b)=>a+Math.random()*(b-a);
+const RI=(a,b)=>Math.floor(R(a,b));
+const $=s=>document.querySelector(s);const $$=s=>document.querySelectorAll(s);
+const NOW=()=>new Date().toTimeString().split(' ')[0];
+
+// === BOOT ===
+const BM=['[SYS] BLACKSITE v2.0 initializing...','[WAR] Loading red team/blue team modules...','[RANSOM] Kill chain simulator ready','[OSINT] Reconnaissance engines loaded — RDAP, WHOIS, DNS, CT','[CTF] Challenge database: 15 challenges, 5 categories','[YARA] 14,200 detection signatures compiled','[ML] Threat classification neural network online','[NET] Encrypted channels established — AES-256-GCM','[INTEL] STIX/TAXII threat feeds connected','[SYS] All warfare modules operational ✓'];
+async function boot(){
+  const t=$('#bTerm'),f=$('#bFill');
+  for(let i=0;i<BM.length;i++){const d=document.createElement('div');d.textContent=BM[i];t.appendChild(d);t.scrollTop=t.scrollHeight;f.style.width=((i+1)/BM.length*100)+'%';await S(140+Math.random()*80)}
+  await S(400);$('#boot').classList.add('off');$('#sh').classList.add('on');initAll();
+}
+
+// === NAV ===
+$$('.nb').forEach(b=>b.addEventListener('click',()=>{$$('.nb').forEach(n=>n.classList.remove('on'));$$('.pn').forEach(p=>p.classList.remove('on'));b.classList.add('on');$(`#p-${b.dataset.p}`).classList.add('on')}));
+setInterval(()=>{$('#clk').textContent=NOW()},1000);
+
+// ======================== WAR ROOM ========================
+let warRunning=false,warTimer=900,redPts=0,bluePts=0,warInterval;
+const nodes=['DMZ','FW-01','WEB-01','WEB-02','APP-01','DB-01','DC-01','FS-01','MAIL','VPN','WKSTN-1','WKSTN-2','WKSTN-3','SIEM','BACKUP'];
+let nodeStates={};
+
+const redAttacks=[
+  {name:'Port Scan',desc:'Scanning perimeter for open services',pts:5,target:'DMZ',mitre:'T1046'},
+  {name:'SQL Injection',desc:'Exploiting web app input validation flaw',pts:15,target:'WEB-01',mitre:'T1190'},
+  {name:'Phishing Payload',desc:'Spear-phishing email delivered to user',pts:10,target:'WKSTN-1',mitre:'T1566.001'},
+  {name:'Password Spray',desc:'Testing common credentials against VPN',pts:10,target:'VPN',mitre:'T1110.003'},
+  {name:'Webshell Upload',desc:'Uploading reverse shell via file upload vuln',pts:20,target:'WEB-02',mitre:'T1505.003'},
+  {name:'Lateral Movement',desc:'PsExec from compromised workstation to server',pts:25,target:'APP-01',mitre:'T1021.002'},
+  {name:'Privilege Escalation',desc:'Kerberoasting service account ticket',pts:25,target:'DC-01',mitre:'T1558.003'},
+  {name:'Data Exfiltration',desc:'Staging sensitive files for extraction',pts:30,target:'DB-01',mitre:'T1041'},
+  {name:'Persistence',desc:'Installing scheduled task backdoor',pts:15,target:'FS-01',mitre:'T1053.005'},
+  {name:'Defense Evasion',desc:'Disabling Windows Defender via registry',pts:20,target:'WKSTN-2',mitre:'T1562.001'},
+  {name:'C2 Channel',desc:'Establishing DNS tunneling C2 channel',pts:20,target:'MAIL',mitre:'T1071.004'},
+  {name:'Credential Dump',desc:'Extracting LSASS memory for credentials',pts:30,target:'DC-01',mitre:'T1003.001'},
+];
+
+const blueDefenses=[
+  {name:'Firewall Block',desc:'Blocking suspicious source IP at perimeter',pts:10,saves:'DMZ'},
+  {name:'WAF Rule Deploy',desc:'Deployed SQL injection detection rule',pts:15,saves:'WEB-01'},
+  {name:'Email Quarantine',desc:'Malicious attachment quarantined by gateway',pts:10,saves:'WKSTN-1'},
+  {name:'MFA Enforcement',desc:'Blocked password spray with MFA challenge',pts:15,saves:'VPN'},
+  {name:'EDR Containment',desc:'Isolated compromised endpoint via EDR',pts:20,saves:'WKSTN-2'},
+  {name:'Network Segmentation',desc:'Blocked lateral movement at VLAN boundary',pts:20,saves:'APP-01'},
+  {name:'SIEM Alert',desc:'Correlated attack patterns, triggered IR',pts:10,saves:'SIEM'},
+  {name:'Patch Deployed',desc:'Emergency patch applied to vulnerable service',pts:15,saves:'WEB-02'},
+  {name:'Account Lockout',desc:'Disabled compromised service account',pts:20,saves:'DC-01'},
+  {name:'Backup Verified',desc:'Confirmed clean backup integrity',pts:10,saves:'BACKUP'},
+  {name:'DNS Sinkhole',desc:'Sinkholed C2 domain in DNS resolver',pts:15,saves:'MAIL'},
+  {name:'Threat Hunt',desc:'Proactive sweep found persistence mechanism',pts:25,saves:'FS-01'},
+];
+
+function initWarRoom(){
+  const map=$('#netMap');
+  map.innerHTML='';
+  nodes.forEach(n=>{
+    nodeStates[n]='normal';
+    const el=document.createElement('div');el.className='net-node';el.id=`node-${n}`;el.textContent=n;
+    map.appendChild(el);
+  });
+}
+
+async function startWar(){
+  if(warRunning)return;
+  warRunning=true;redPts=0;bluePts=0;warTimer=900;
+  $('#redScore').textContent='0';$('#blueScore').textContent='0';
+  $('#redLog').innerHTML='';$('#blueLog').innerHTML='';
+  initWarRoom();
+  clearInterval(warInterval);
+  warInterval=setInterval(()=>{
+    warTimer--;
+    const m=Math.floor(warTimer/60);const s=warTimer%60;
+    $('#wrTimer').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if(warTimer<=0){clearInterval(warInterval);warRunning=false;$('#wrTimer').textContent='DONE'}
+  },1000);
+  warLoop();
+}
+
+async function warLoop(){
+  while(warRunning&&warTimer>0){
+    await S(1500+Math.random()*2500);
+    if(!warRunning)break;
+    // Red attack
+    const atk=P(redAttacks);
+    redPts+=atk.pts;$('#redScore').textContent=redPts;
+    const atkEl=document.createElement('div');atkEl.className='atk-card';atkEl.style.borderLeftColor='var(--r)';
+    atkEl.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem"><span style="font-family:var(--fd);font-size:0.55rem;color:var(--r)">${atk.name}</span><span class="bg bg-r">+${atk.pts}</span></div><div style="font-size:0.6rem;color:var(--t2)">${atk.desc}</div><div style="margin-top:0.2rem"><span class="tg" style="color:var(--o);border-color:rgba(255,102,0,0.3)">${atk.mitre}</span><span class="tg">Target: ${atk.target}</span></div>`;
+    $('#redLog').prepend(atkEl);
+    // Compromise node
+    const nEl=$(`#node-${atk.target}`);if(nEl&&nodeStates[atk.target]!=='defended'){nEl.className='net-node compromised';nodeStates[atk.target]='compromised'}
+
+    await S(800+Math.random()*1500);
+    if(!warRunning)break;
+    // Blue defense
+    const def=P(blueDefenses);
+    bluePts+=def.pts;$('#blueScore').textContent=bluePts;
+    const defEl=document.createElement('div');defEl.className='def-card';
+    defEl.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem"><span style="font-family:var(--fd);font-size:0.55rem;color:var(--c)">${def.name}</span><span class="bg bg-c">+${def.pts}</span></div><div style="font-size:0.6rem;color:var(--t2)">${def.desc}</div><div style="margin-top:0.2rem"><span class="tg" style="color:var(--g);border-color:rgba(0,255,102,0.3)">Protects: ${def.saves}</span></div>`;
+    $('#blueLog').prepend(defEl);
+    // Defend node
+    const dEl=$(`#node-${def.saves}`);if(dEl){dEl.className='net-node defended';nodeStates[def.saves]='defended'}
+  }
+}
+
+function resetWar(){warRunning=false;clearInterval(warInterval);warTimer=900;$('#wrTimer').textContent='15:00';redPts=0;bluePts=0;$('#redScore').textContent='0';$('#blueScore').textContent='0';$('#redLog').innerHTML='';$('#blueLog').innerHTML='';initWarRoom()}
+
+// ======================== RANSOMWARE SIM ========================
+const killSteps=[
+  {name:'Reconnaissance',desc:'Scanning target network, identifying high-value assets'},
+  {name:'Initial Access',desc:'Phishing email with macro-enabled document delivered'},
+  {name:'Execution',desc:'VBA macro executes PowerShell download cradle'},
+  {name:'Persistence',desc:'Scheduled task + registry run key installed'},
+  {name:'Privilege Escalation',desc:'UAC bypass via fodhelper.exe'},
+  {name:'Defense Evasion',desc:'Disabling AV, deleting event logs'},
+  {name:'Credential Access',desc:'LSASS memory dump — domain admin obtained'},
+  {name:'Lateral Movement',desc:'PsExec spreading to file servers and DCs'},
+  {name:'Collection',desc:'Staging sensitive data for double extortion'},
+  {name:'Impact',desc:'AES-256 + RSA-2048 encryption of all files'},
+];
+
+const fileTypes=[
+  {icon:'📄',ext:'docx'},{icon:'📊',ext:'xlsx'},{icon:'📑',ext:'pdf'},{icon:'🖼️',ext:'png'},
+  {icon:'💾',ext:'sql'},{icon:'📁',ext:'bak'},{icon:'📝',ext:'txt'},{icon:'🎬',ext:'mp4'},
+  {icon:'📧',ext:'pst'},{icon:'🗃️',ext:'zip'},{icon:'📐',ext:'dwg'},{icon:'💻',ext:'py'},
+  {icon:'🔧',ext:'conf'},{icon:'📋',ext:'csv'},{icon:'🎵',ext:'mp3'},{icon:'🔑',ext:'key'},
+];
+const fileNames=['budget_2026','client_list','passwords','employee_records','contracts','project_plan','tax_returns','medical_records','payroll','backup_db','source_code','api_keys','board_minutes','financials','strategy','patent_draft','legal_review','vendor_list','audit_report','insurance','credentials','server_config','vpn_keys','ssh_keys'];
+
+let rsFiles=[];let rsRunning=false;
+function initRansomware(){
+  const grid=$('#fileGrid');grid.innerHTML='';rsFiles=[];
+  const count=48;
+  for(let i=0;i<count;i++){
+    const ft=P(fileTypes);const fn=P(fileNames);
+    const el=document.createElement('div');el.className='file-node';el.id=`f-${i}`;
+    el.innerHTML=`<div class="icon">${ft.icon}</div><div class="fname">${fn}.${ft.ext}</div>`;
+    grid.appendChild(el);
+    rsFiles.push({id:i,encrypted:false});
+  }
+  $('#safeCount').textContent=count;$('#encCount').textContent='0';
+  $('#encBar div')[0]&&($('#encBar div')[0].style.width='0');
+  // Kill chain
+  const kc=$('#killChain');kc.innerHTML='<div class="kc-line"></div>'+killSteps.map((s,i)=>`<div class="kc-step" id="kc-${i}"><div class="kc-name">${s.name}</div><div class="kc-desc">${s.desc}</div></div>`).join('');
+  $('#rsLog').innerHTML='';$('#ransomNote').style.display='none';
+}
+
+async function startRansomware(){
+  if(rsRunning)return;rsRunning=true;
+  initRansomware();
+  const log=$('#rsLog');
+  function addLog(msg,color='var(--t2)'){const d=document.createElement('div');d.style.color=color;d.style.borderBottom='1px solid rgba(255,255,255,0.02)';d.style.padding='0.15rem 0';d.innerHTML=`<span style="color:var(--t3)">[${NOW()}]</span> ${msg}`;log.prepend(d)}
+
+  // Kill chain phases
+  for(let i=0;i<killSteps.length;i++){
+    const step=$(`#kc-${i}`);
+    if(i>0)$(`#kc-${i-1}`).classList.remove('active');
+    step.classList.add('active');
+    addLog(`<span style="color:var(--o)">Phase ${i+1}:</span> ${killSteps[i].name} — ${killSteps[i].desc}`, 'var(--o)');
+    await S(1200+Math.random()*800);
+    step.classList.remove('active');step.classList.add('done');
+
+    // Start encrypting files during Impact phase
+    if(i===killSteps.length-1){
+      addLog('🔒 ENCRYPTION STARTED — AES-256-CBC + RSA-2048','var(--r)');
+      const indices=[...Array(rsFiles.length).keys()];
+      // Shuffle
+      for(let j=indices.length-1;j>0;j--){const k=RI(0,j+1);[indices[j],indices[k]]=[indices[k],indices[j]]}
+      for(const idx of indices){
+        if(!rsRunning)return;
+        rsFiles[idx].encrypted=true;
+        const el=$(`#f-${idx}`);if(el)el.classList.add('encrypted');
+        const enc=rsFiles.filter(f=>f.encrypted).length;
+        const safe=rsFiles.length-enc;
+        $('#encCount').textContent=enc;$('#safeCount').textContent=safe;
+        $('#encBar').querySelector('div').style.width=(enc/rsFiles.length*100)+'%';
+        if(enc%6===0)addLog(`Encrypted ${enc}/${rsFiles.length} files...`,'var(--r)');
+        await S(60+Math.random()*80);
+      }
+      addLog('⚠ ALL FILES ENCRYPTED — Ransom note deployed','var(--r)');
+      $('#ransomNote').style.display='block';
+    }
+  }
+  rsRunning=false;
+}
+function resetRansomware(){rsRunning=false;initRansomware()}
+
+// ======================== OSINT TERMINAL ========================
+const tOut=$('#tOut');const tIn=$('#tIn');
+const osintDB={
+  'john.smith':{name:'John Smith',age:34,loc:'Austin, TX',email:'j.smith@techcorp.io',employer:'TechCorp Inc.',title:'Senior Developer',social:{twitter:'@jsmith_dev',github:'jsmithdev',linkedin:'johnsmith-dev'},breaches:['LinkedIn 2012 (password)','Adobe 2013 (email, encrypted pw)','Dropbox 2016 (email, hash)'],phones:['(512) 555-0142'],domains:['jsmith.dev','johnsmith.io']},
+  'jane.doe':{name:'Jane Doe',age:29,loc:'Seattle, WA',email:'jane@startup.co',employer:'Startup Co',title:'CTO',social:{twitter:'@janedoe',github:'janedoe',linkedin:'janedoe-cto'},breaches:['Collection #1 (email, password)','Canva 2019 (email, name)'],phones:['(206) 555-0198'],domains:['janedoe.com']},
+  'acme-corp.com':{type:'domain',registrar:'Cloudflare Inc.',created:'2018-03-15',expires:'2026-03-15',ns:['ns1.cloudflare.com','ns2.cloudflare.com'],mx:['mail.acme-corp.com'],txt:['v=spf1 include:_spf.google.com ~all','google-site-verification=abc123'],subs:['www','mail','vpn','api','dev','staging','admin','git','ci','monitor'],ips:['104.21.45.123','172.67.182.45'],tech:['Cloudflare CDN','nginx','React','Node.js','PostgreSQL']},
+};
+
+const helpText=`<span class="t-g">Available Commands:</span>
+<span class="t-c">  lookup &lt;person&gt;</span>    <span class="t-d">— Search person (e.g., lookup john.smith)</span>
+<span class="t-c">  recon &lt;domain&gt;</span>     <span class="t-d">— Domain reconnaissance</span>
+<span class="t-c">  whois &lt;domain&gt;</span>     <span class="t-d">— WHOIS lookup</span>
+<span class="t-c">  breach &lt;email&gt;</span>     <span class="t-d">— Check breach databases</span>
+<span class="t-c">  portscan &lt;target&gt;</span>  <span class="t-d">— Scan common ports</span>
+<span class="t-c">  geoip &lt;ip&gt;</span>         <span class="t-d">— IP geolocation</span>
+<span class="t-c">  headers &lt;domain&gt;</span>   <span class="t-d">— Check security headers</span>
+<span class="t-c">  social &lt;username&gt;</span>  <span class="t-d">— Social media footprint</span>
+<span class="t-c">  help</span>                <span class="t-d">— Show this help</span>
+<span class="t-c">  clear</span>               <span class="t-d">— Clear terminal</span>
+<span class="t-d">───────────────────────────────────</span>
+<span class="t-d">Try: lookup john.smith | recon acme-corp.com</span>`;
+
+function termPrint(html){const d=document.createElement('div');d.innerHTML=html;tOut.appendChild(d);tOut.scrollTop=tOut.scrollHeight}
+async function termType(lines,delay=40){for(const line of lines){termPrint(line);await S(delay+Math.random()*30)}}
+
+$('#tIn').addEventListener('keydown',async e=>{
+  if(e.key!=='Enter')return;
+  const cmd=tIn.value.trim();tIn.value='';
+  if(!cmd)return;
+  termPrint(`<span class="t-g">osint@blacksite:~$</span> ${cmd}`);
+  const parts=cmd.split(/\s+/);const action=parts[0].toLowerCase();const arg=parts.slice(1).join(' ');
+
+  if(action==='clear'){tOut.innerHTML='';return}
+  if(action==='help'){termPrint(helpText);return}
+
+  if(action==='lookup'){
+    const key=arg.toLowerCase().replace(/\s+/g,'.');
+    const person=osintDB[key]||osintDB['john.smith'];
+    await termType([
+      `<span class="t-y">[ Searching intelligence databases for: ${arg||'john.smith'} ]</span>`,
+      `<span class="t-d">Querying OSINT sources...</span>`,
+    ],100);
+    await S(600);
+    const p=person;
+    await termType([
+      `<span class="t-g">═══ PROFILE FOUND ═══</span>`,
+      `<span class="t-w">Name:</span>       <span class="t-c">${p.name}</span>`,
+      `<span class="t-w">Age:</span>        <span class="t-c">${p.age}</span>`,
+      `<span class="t-w">Location:</span>   <span class="t-c">${p.loc}</span>`,
+      `<span class="t-w">Email:</span>      <span class="t-c">${p.email}</span>`,
+      `<span class="t-w">Employer:</span>   <span class="t-c">${p.employer}</span>`,
+      `<span class="t-w">Title:</span>      <span class="t-c">${p.title}</span>`,
+      ``,
+      `<span class="t-g">═══ SOCIAL MEDIA ═══</span>`,
+      `<span class="t-w">Twitter:</span>    <span class="t-p">${p.social.twitter}</span>`,
+      `<span class="t-w">GitHub:</span>     <span class="t-p">${p.social.github}</span>`,
+      `<span class="t-w">LinkedIn:</span>   <span class="t-p">${p.social.linkedin}</span>`,
+      ``,
+      `<span class="t-g">═══ PHONE NUMBERS ═══</span>`,
+      ...p.phones.map(ph=>`  <span class="t-c">${ph}</span>`),
+      ``,
+      `<span class="t-r">═══ DATA BREACHES (${p.breaches.length}) ═══</span>`,
+      ...p.breaches.map(b=>`  <span class="t-r">⚠</span> ${b}`),
+      ``,
+      `<span class="t-g">═══ DOMAINS ═══</span>`,
+      ...p.domains.map(d=>`  <span class="t-c">${d}</span>`),
+      `<span class="t-d">───────────────────────────────────</span>`,
+    ],30);
+    // Update sidebar
+    updateDossier(p);
+    return;
+  }
+
+  if(action==='recon'||action==='whois'){
+    const domain=arg||'acme-corp.com';
+    const d=osintDB['acme-corp.com'];
+    await termType([`<span class="t-y">[ Running domain recon: ${domain} ]</span>`,`<span class="t-d">Querying DNS, WHOIS, CT logs...</span>`],100);
+    await S(500);
+    await termType([
+      `<span class="t-g">═══ DOMAIN INTELLIGENCE ═══</span>`,
+      `<span class="t-w">Registrar:</span>  <span class="t-c">${d.registrar}</span>`,
+      `<span class="t-w">Created:</span>    <span class="t-c">${d.created}</span>`,
+      `<span class="t-w">Expires:</span>    <span class="t-c">${d.expires}</span>`,
+      ``,
+      `<span class="t-g">═══ NAMESERVERS ═══</span>`,
+      ...d.ns.map(n=>`  <span class="t-c">${n}</span>`),
+      ``,
+      `<span class="t-g">═══ MX RECORDS ═══</span>`,
+      ...d.mx.map(m=>`  <span class="t-c">${m}</span>`),
+      ``,
+      `<span class="t-g">═══ SUBDOMAINS (${d.subs.length}) ═══</span>`,
+      ...d.subs.map(s=>`  <span class="t-p">${s}.${domain}</span>  →  <span class="t-c">${RI(10,200)}.${RI(0,255)}.${RI(0,255)}.${RI(1,254)}</span>`),
+      ``,
+      `<span class="t-g">═══ TECHNOLOGY STACK ═══</span>`,
+      ...d.tech.map(t=>`  <span class="t-y">${t}</span>`),
+      `<span class="t-d">───────────────────────────────────</span>`,
+    ],25);
+    return;
+  }
+
+  if(action==='breach'){
+    const email=arg||'user@example.com';
+    await termType([`<span class="t-y">[ Checking breach databases for: ${email} ]</span>`],100);
+    await S(800);
+    const breaches=[
+      {name:'LinkedIn',date:'2012',records:'164M',data:'Email, Password (SHA1)'},
+      {name:'Adobe',date:'2013',records:'153M',data:'Email, Encrypted password, Hint'},
+      {name:'Collection #1',date:'2019',records:'773M',data:'Email, Password (plaintext)'},
+      {name:'Canva',date:'2019',records:'137M',data:'Email, Name, City, Bcrypt hash'},
+    ];
+    const found=breaches.slice(0,RI(1,breaches.length+1));
+    await termType([
+      `<span class="t-r">═══ ${found.length} BREACHES FOUND ═══</span>`,
+      ...found.map(b=>`
+  <span class="t-r">⚠ ${b.name} (${b.date})</span>
+    <span class="t-d">Records:</span> <span class="t-c">${b.records}</span>
+    <span class="t-d">Exposed:</span> <span class="t-y">${b.data}</span>`),
+      ``,
+      `<span class="t-r">RISK ASSESSMENT: ${found.length>=3?'HIGH — Immediate password reset recommended':'MODERATE — Review exposed credentials'}</span>`,
+      `<span class="t-d">───────────────────────────────────</span>`,
+    ],30);
+    return;
+  }
+
+  if(action==='portscan'){
+    const target=arg||'192.168.1.1';
+    await termType([`<span class="t-y">[ Scanning ${target} — Top 15 ports ]</span>`],100);
+    const ports=[{p:22,s:'SSH',v:'OpenSSH 8.9'},{p:80,s:'HTTP',v:'nginx/1.24'},{p:443,s:'HTTPS',v:'nginx/1.24'},{p:3306,s:'MySQL',v:'MySQL 8.0'},{p:8080,s:'HTTP-Proxy',v:'Jetty 11'},{p:21,s:'FTP',v:'vsftpd 3.0'},{p:25,s:'SMTP',v:'Postfix'},{p:53,s:'DNS',v:'BIND 9.18'},{p:445,s:'SMB',v:'Samba 4.19'},{p:3389,s:'RDP',v:'MS TermServ'},{p:5432,s:'PostgreSQL',v:'PG 16.2'},{p:6379,s:'Redis',v:'Redis 7.2'},{p:27017,s:'MongoDB',v:'Mongo 7.0'},{p:9200,s:'ES',v:'ES 8.12'},{p:11211,s:'Memcached',v:'1.6'}];
+    await S(300);
+    for(const port of ports){
+      const state=Math.random()>0.55?'open':'closed';
+      const color=state==='open'?'t-g':'t-r';
+      await termType([`  <span class="${color}">${String(port.p).padEnd(7)}${state.padEnd(9)}</span><span class="t-c">${state==='open'?port.s.padEnd(14):'—'.padEnd(14)}</span><span class="t-d">${state==='open'?port.v:'—'}</span>`],40);
+    }
+    termPrint(`<span class="t-d">───────────────────────────────────</span>`);
+    return;
+  }
+
+  if(action==='geoip'){
+    const ip=arg||'8.8.8.8';
+    await termType([`<span class="t-y">[ GeoIP lookup: ${ip} ]</span>`],100);
+    await S(400);
+    const countries=['United States','Germany','Netherlands','Japan','Singapore','United Kingdom','Canada','Australia'];
+    const cities=['San Francisco','Frankfurt','Amsterdam','Tokyo','Singapore','London','Toronto','Sydney'];
+    const isps=['Google LLC','Amazon AWS','DigitalOcean','Cloudflare','Microsoft Azure','OVH SAS'];
+    const i=RI(0,countries.length);
+    await termType([
+      `<span class="t-g">═══ GEOLOCATION ═══</span>`,
+      `<span class="t-w">IP:</span>        <span class="t-c">${ip}</span>`,
+      `<span class="t-w">Country:</span>   <span class="t-c">${countries[i]}</span>`,
+      `<span class="t-w">City:</span>      <span class="t-c">${cities[i]}</span>`,
+      `<span class="t-w">ISP:</span>       <span class="t-c">${P(isps)}</span>`,
+      `<span class="t-w">ASN:</span>       <span class="t-c">AS${RI(1000,65000)}</span>`,
+      `<span class="t-w">Lat/Lng:</span>   <span class="t-c">${(R(-60,60)).toFixed(4)}, ${(R(-180,180)).toFixed(4)}</span>`,
+      `<span class="t-w">Tor:</span>       <span class="${Math.random()>0.9?'t-r':'t-g'}">${Math.random()>0.9?'YES':'NO'}</span>`,
+      `<span class="t-w">Proxy:</span>     <span class="${Math.random()>0.8?'t-r':'t-g'}">${Math.random()>0.8?'YES':'NO'}</span>`,
+      `<span class="t-d">───────────────────────────────────</span>`,
+    ],30);
+    return;
+  }
+
+  if(action==='social'){
+    const user=arg||'johndoe';
+    await termType([`<span class="t-y">[ Social media footprint scan: ${user} ]</span>`,`<span class="t-d">Checking 15 platforms...</span>`],100);
+    await S(600);
+    const platforms=[
+      {name:'Twitter/X',found:Math.random()>0.3},{name:'GitHub',found:Math.random()>0.3},{name:'LinkedIn',found:Math.random()>0.2},
+      {name:'Instagram',found:Math.random()>0.4},{name:'Reddit',found:Math.random()>0.4},{name:'TikTok',found:Math.random()>0.5},
+      {name:'YouTube',found:Math.random()>0.5},{name:'Facebook',found:Math.random()>0.4},{name:'Discord',found:Math.random()>0.5},
+      {name:'Stack Overflow',found:Math.random()>0.5},{name:'Medium',found:Math.random()>0.6},{name:'Twitch',found:Math.random()>0.6},
+      {name:'Pinterest',found:Math.random()>0.7},{name:'Keybase',found:Math.random()>0.7},{name:'HackerOne',found:Math.random()>0.8},
+    ];
+    for(const p of platforms){
+      await termType([`  ${p.found?'<span class="t-g">✓ FOUND</span>':'<span class="t-r">✗ NOT FOUND</span>'}  <span class="t-c">${p.name.padEnd(16)}</span>${p.found?`<span class="t-p">${p.name.toLowerCase().replace(/[\s\/]/g,'')}.com/${user}</span>`:''}`],50);
+    }
+    const found=platforms.filter(p=>p.found).length;
+    termPrint(`\n<span class="t-y">Found ${found}/${platforms.length} platforms — Digital footprint: ${found>=10?'HIGH':found>=6?'MODERATE':'LOW'}</span>`);
+    termPrint(`<span class="t-d">───────────────────────────────────</span>`);
+    return;
+  }
+
+  if(action==='headers'){
+    const domain=arg||'example.com';
+    await termType([`<span class="t-y">[ Security header analysis: ${domain} ]</span>`],100);
+    await S(500);
+    const hdrs=[
+      {name:'Content-Security-Policy',imp:'HIGH'},{name:'Strict-Transport-Security',imp:'HIGH'},
+      {name:'X-Content-Type-Options',imp:'MED'},{name:'X-Frame-Options',imp:'MED'},
+      {name:'Referrer-Policy',imp:'MED'},{name:'Permissions-Policy',imp:'MED'},
+      {name:'X-XSS-Protection',imp:'LOW'},{name:'Cross-Origin-Embedder-Policy',imp:'LOW'},
+    ];
+    for(const h of hdrs){
+      const present=Math.random()>0.4;
+      await termType([`  ${present?'<span class="t-g">✓ PRESENT</span>':'<span class="t-r">✗ MISSING</span>'}  <span class="t-c">${h.name.padEnd(32)}</span><span class="t-${h.imp==='HIGH'?'r':h.imp==='MED'?'y':'d'}">[${h.imp}]</span>`],60);
+    }
+    termPrint(`<span class="t-d">───────────────────────────────────</span>`);
+    return;
+  }
+
+  termPrint(`<span class="t-r">Unknown command: ${action}</span> — Type <span class="t-c">help</span> for available commands`);
+});
+
+function updateDossier(p){
+  if(!p.name)return;
+  const el=$('#dossierContent');
+  el.innerHTML=`
+    <div class="dossier"><div class="dossier-head"><span style="font-family:var(--fd);font-size:0.55rem;color:var(--g);letter-spacing:0.12em">SUBJECT PROFILE</span></div>
+    <div class="dossier-body">${Object.entries({Name:p.name,Age:p.age,Location:p.loc,Email:p.email,Employer:p.employer,Title:p.title}).map(([k,v])=>`<div class="d-row"><span class="d-label">${k}</span><span class="d-val">${v}</span></div>`).join('')}</div></div>
+    <div class="dossier"><div class="dossier-head"><span style="font-family:var(--fd);font-size:0.55rem;color:var(--p);letter-spacing:0.12em">SOCIAL ACCOUNTS</span></div>
+    <div class="dossier-body">${Object.entries(p.social).map(([k,v])=>`<div class="d-row"><span class="d-label">${k}</span><span class="d-val">${v}</span></div>`).join('')}</div></div>
+    <div class="dossier"><div class="dossier-head"><span style="font-family:var(--fd);font-size:0.55rem;color:var(--r);letter-spacing:0.12em">BREACH EXPOSURE</span></div>
+    <div class="dossier-body">${p.breaches.map(b=>`<div class="breach-item"><span style="color:var(--r)">⚠</span> ${b}</div>`).join('')}</div></div>
+  `;
+}
+
+// ======================== CTF ARENA ========================
+const challenges=[
+  {cat:'Cryptography',id:'crypto1',name:'Caesar\'s Cipher',pts:100,desc:'A secret message was intercepted from an enemy operative. The message reads:\n\n<code style="color:var(--y);background:var(--bg2);padding:0.3rem 0.6rem;border-radius:3px;display:block;margin:0.5rem 0">Gur cnffjbeq vf: synt{ebg13_vf_abg_rapelcgvba}</code>\n\nDecode the message and submit the flag.',flag:'flag{rot13_is_not_encryption}',hints:['This is one of the oldest ciphers known','The shift value is 13','Try running it through ROT13']},
+  {cat:'Cryptography',id:'crypto2',name:'Base64 Secrets',pts:150,desc:'Our forensics team found this string in a compromised server\'s memory:\n\n<code style="color:var(--y);background:var(--bg2);padding:0.3rem 0.6rem;border-radius:3px;display:block;margin:0.5rem 0">ZmxhZ3tiYXNlNjRfZGVjb2RpbmdfbWFzdGVyfQ==</code>\n\nWhat is the hidden flag?',flag:'flag{base64_decoding_master}',hints:['The = signs at the end are a big clue','This encoding uses A-Z, a-z, 0-9, +, /','It\'s Base64 encoded']},
+  {cat:'Cryptography',id:'crypto3',name:'XOR Challenge',pts:250,desc:'Two hex strings were found. When XOR\'d together, they reveal the flag:\n\n<code style="color:var(--y);background:var(--bg2);padding:0.3rem 0.6rem;border-radius:3px;display:block;margin:0.5rem 0">Key: 0x4B  Ciphertext: 666c61677b7830725f69735f7265766572736962 XOR with key</code>\n\nHint: each byte of the hex-decoded ciphertext should be XOR\'d with 0x00 (the key was a decoy — the ciphertext IS the flag in hex).',flag:'flag{x0r_is_reversible}',hints:['Convert the hex ciphertext directly to ASCII','Sometimes the simplest answer is right','Hex decode: 666c6167 = "flag"']},
+  {cat:'Web Security',id:'web1',name:'Hidden in Plain Sight',pts:100,desc:'A developer left debug information in the page source. The HTML comment contains:\n\n<code style="color:var(--y);background:var(--bg2);padding:0.3rem 0.6rem;border-radius:3px;display:block;margin:0.5rem 0">&lt;!-- TODO: Remove before prod. Admin flag: flag{check_your_source_code} --&gt;</code>\n\nAlways check the source!',flag:'flag{check_your_source_code}',hints:['View page source is your friend','Ctrl+U reveals all','The flag is literally in the description']},
+  {cat:'Web Security',id:'web2',name:'Cookie Monster',pts:200,desc:'You found a web app that checks your authorization level via a cookie:\n\n<code style="color:var(--y);background:var(--bg2);padding:0.3rem 0.6rem;border-radius:3px;display:block;margin:0.5rem 0">Cookie: role=dXNlcg==</code>\n\nThe admin role value is "admin" encoded the same way. What flag would you get if you set the admin cookie? The flag format is: flag{cookie_value_base64_of_admin}',flag:'flag{cookie_value_YWRtaW4=}',hints:['The current cookie value is Base64 encoded','Decode dXNlcg== to see what it says','Encode "admin" to Base64: YWRtaW4=']},
+  {cat:'Web Security',id:'web3',name:'Directory Traversal',pts:250,desc:'A file server has a download endpoint:\n\n<code style="color:var(--y);background:var(--bg2);padding:0.3rem 0.6rem;border-radius:3px;display:block;margin:0.5rem 0">/download?file=report.pdf</code>\n\nYou suspect path traversal works. What file would reveal Linux user accounts?\n\nThe flag is: flag{the_path_you_would_use_to_read_passwd}',flag:'flag{../../../etc/passwd}',hints:['Think about Linux system files','Use ../ to go up directories','The passwd file is at /etc/passwd']},
+  {cat:'Forensics',id:'for1',name:'Timestamp Decode',pts:150,desc:'A log file shows a suspicious Unix timestamp:\n\n<code style="color:var(--y);background:var(--bg2);padding:0.3rem 0.6rem;border-radius:3px;display:block;margin:0.5rem 0">1234567890</code>\n\nConvert this to a human-readable date (UTC). The flag format is: flag{YYYY-MM-DD_HH:MM:SS}',flag:'flag{2009-02-13_23:31:30}',hints:['Use an epoch converter','This is seconds since Jan 1, 1970','The date is in February 2009']},
+  {cat:'Forensics',id:'for2',name:'File Signature',pts:200,desc:'A file was renamed to hide its true type. The first 4 bytes (hex) are:\n\n<code style="color:var(--y);background:var(--bg2);padding:0.3rem 0.6rem;border-radius:3px;display:block;margin:0.5rem 0">89 50 4E 47</code>\n\nWhat type of file is this? Flag format: flag{file_extension}',flag:'flag{png}',hints:['These bytes are called "magic numbers"','The second through fourth bytes spell something','P-N-G in ASCII']},
+  {cat:'Forensics',id:'for3',name:'Metadata Leak',pts:250,desc:'EXIF data from a leaked photo reveals:\n\n<code style="color:var(--y);background:var(--bg2);padding:0.3rem 0.6rem;border-radius:3px;display:block;margin:0.5rem 0">GPS Latitude: 35.6762\nGPS Longitude: 139.6503\nCamera: Canon EOS R5\nAuthor: flag{metadata_reveals_all}</code>\n\nPhotos often contain more than meets the eye.',flag:'flag{metadata_reveals_all}',hints:['Check all the EXIF fields','The Author field is interesting','The flag is in the metadata listing above']},
+  {cat:'Network',id:'net1',name:'Packet Analysis',pts:150,desc:'A suspicious DNS query was captured:\n\n<code style="color:var(--y);background:var(--bg2);padding:0.3rem 0.6rem;border-radius:3px;display:block;margin:0.5rem 0">Query: 666c61677b646e735f7475.\n6e6e656c696e677d.evil.com\nType: TXT</code>\n\nThe subdomain contains hex-encoded data. Decode it to find the flag.',flag:'flag{dns_tunneling}',hints:['Remove the dots and .evil.com','The remaining hex decodes to ASCII','666c6167 = "flag"']},
+  {cat:'Network',id:'net2',name:'Rogue AP',pts:200,desc:'You captured a beacon frame from a suspicious access point:\n\n<code style="color:var(--y);background:var(--bg2);padding:0.3rem 0.6rem;border-radius:3px;display:block;margin:0.5rem 0">SSID: Corp-WiFi-5G\nBSSID: DE:AD:BE:EF:CA:FE\nChannel: 6\nEncryption: Open (!)\nHidden flag in BSSID</code>\n\nThe BSSID spells something. flag{bssid_without_colons_lowercase}',flag:'flag{deadbeefcafe}',hints:['Look at the BSSID MAC address','Remove the colons','DEAD BEEF CAFE is a classic hex string']},
+  {cat:'Reverse Engineering',id:'rev1',name:'String Dump',pts:150,desc:'Running `strings` on a suspicious binary reveals:\n\n<code style="color:var(--y);background:var(--bg2);padding:0.3rem 0.6rem;border-radius:3px;display:block;margin:0.5rem 0">...\nUsage: ./backdoor --connect\nVersion: 1.3.37\nAuthor: APT-1337\nflag{strings_finds_secrets}\nSocket created successfully\n...</code>\n\nSometimes the simplest tools are the most effective.',flag:'flag{strings_finds_secrets}',hints:['The `strings` command extracts printable text','Read through the output carefully','The flag is literally listed in the strings output']},
+  {cat:'Reverse Engineering',id:'rev2',name:'Assembly Logic',pts:300,desc:'What value is in EAX after this x86 assembly executes?\n\n<code style="color:var(--y);background:var(--bg2);padding:0.3rem 0.6rem;border-radius:3px;display:block;margin:0.5rem 0">mov eax, 10\nmov ebx, 5\nadd eax, ebx\nimul eax, 2\nsub eax, 7\n; EAX = ?</code>\n\nFlag format: flag{decimal_value}',flag:'flag{23}',hints:['Step through line by line','After add: EAX = 15. After imul: EAX = 30','30 - 7 = 23']},
+];
+
+let solvedChallenges=new Set();let playerScore=0;let activeChallenge=null;
+
+function initCTF(){
+  const list=$('#challList');
+  const cats=[...new Set(challenges.map(c=>c.cat))];
+  const catColors={'Cryptography':'var(--p)','Web Security':'var(--c)','Forensics':'var(--g)','Network':'var(--o)','Reverse Engineering':'var(--r)'};
+  list.innerHTML=cats.map(cat=>`
+    <div class="ctf-cat">
+      <div class="ctf-cat-title" style="color:${catColors[cat]||'var(--y)'}"><span style="width:8px;height:2px;background:currentColor;display:inline-block"></span>${cat}</div>
+      ${challenges.filter(c=>c.cat===cat).map(c=>`
+        <div class="chall ${solvedChallenges.has(c.id)?'solved':''}" data-id="${c.id}" onclick="selectChallenge('${c.id}')">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:0.7rem">${c.name}</span>
+            <span class="chall-pts" style="color:var(--y)">${c.pts}</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+  updateLeaderboard();
+  updatePlayerStats();
+}
+
+function selectChallenge(id){
+  const c=challenges.find(ch=>ch.id===id);if(!c)return;
+  activeChallenge=c;
+  $$('.chall').forEach(el=>{el.classList.remove('active');if(el.dataset.id===id)el.classList.add('active')});
+  const main=$('#ctfMain');
+  const solved=solvedChallenges.has(id);
+  main.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div>
+        <div style="font-family:var(--fd);font-size:0.9rem;letter-spacing:0.12em;color:var(--y);margin-bottom:0.2rem">${c.name}</div>
+        <div style="font-size:0.6rem;color:var(--t3)">${c.cat} • ${c.pts} points</div>
+      </div>
+      ${solved?'<span class="bg bg-g" style="font-size:0.65rem">SOLVED ✓</span>':''}
+    </div>
+    <div class="ctf-desc">${c.desc}</div>
+    <div class="ctf-hints" id="hintsArea">
+      <div style="font-size:0.65rem;color:var(--t3);margin-bottom:0.3rem">Hints (cost -25 pts each):</div>
+      ${c.hints.map((h,i)=>`
+        <button class="btn btn-y btn-sm hint-btn" onclick="revealHint(${i})">Hint ${i+1}</button>
+        <div class="hint-text" id="hint-${i}">${h}</div>
+      `).join('')}
+    </div>
+    ${!solved?`
+    <div class="flag-input">
+      <input type="text" id="flagInput" placeholder="flag{...}" spellcheck="false" style="flex:1">
+      <button class="btn btn-g" onclick="submitFlag()">Submit Flag</button>
+    </div>
+    <div id="flagResult" style="margin-top:0.5rem;font-size:0.7rem"></div>
+    `:'<div style="color:var(--g);font-size:0.75rem;margin-top:1rem;font-family:var(--fm)">✓ Challenge completed!</div>'}
+  `;
+  if(!solved){$('#flagInput').addEventListener('keydown',e=>{if(e.key==='Enter')submitFlag()})}
+}
+
+function revealHint(i){const el=$(`#hint-${i}`);el.style.display=el.style.display==='block'?'none':'block'}
+
+function submitFlag(){
+  if(!activeChallenge)return;
+  const input=$('#flagInput').value.trim();
+  const result=$('#flagResult');
+  if(input===activeChallenge.flag){
+    solvedChallenges.add(activeChallenge.id);
+    playerScore+=activeChallenge.pts;
+    result.innerHTML=`<span style="color:var(--g)">✓ CORRECT! +${activeChallenge.pts} points</span>`;
+    initCTF();
+    setTimeout(()=>selectChallenge(activeChallenge.id),100);
+  }else{
+    result.innerHTML=`<span style="color:var(--r)">✗ Incorrect flag. Try again.</span>`;
+  }
+}
+
+function updateLeaderboard(){
+  const lb=$('#leaderboard');
+  const players=[
+    {name:'NexusFang',pts:playerScore,you:true},
+    {name:'sh4d0w_0ps',pts:1850},{name:'z3r0c00l',pts:1600},{name:'null_byte',pts:1450},
+    {name:'gh0st_protocol',pts:1200},{name:'d4rk_m4tter',pts:950},{name:'cyb3r_ph4ntom',pts:800},
+    {name:'r00t_kit',pts:600},{name:'h4x0r_elite',pts:450},{name:'n3tw0rk_n1nja',pts:300},
+  ].sort((a,b)=>b.pts-a.pts);
+  lb.innerHTML=players.map((p,i)=>`
+    <div class="lb-row" style="${p.you?'background:rgba(255,204,0,0.05);border:1px solid rgba(255,204,0,0.2);border-radius:2px':''}">
+      <span class="lb-rank">#${i+1}</span>
+      <span class="lb-name" style="${p.you?'color:var(--y);font-weight:700':''}">${p.name}${p.you?' (You)':''}</span>
+      <span class="lb-pts">${p.pts}</span>
+    </div>
+  `).join('');
+}
+
+function updatePlayerStats(){
+  const total=challenges.reduce((a,c)=>a+c.pts,0);
+  const el=$('#playerStats');
+  el.innerHTML=`
+    <div style="font-size:0.65rem;line-height:2">
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--t3)">Score</span><span style="color:var(--y);font-family:var(--fd)">${playerScore}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--t3)">Solved</span><span style="color:var(--g)">${solvedChallenges.size}/${challenges.length}</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--t3)">Completion</span><span style="color:var(--c)">${Math.round(solvedChallenges.size/challenges.length*100)}%</span></div>
+      <div class="pb" style="margin-top:0.3rem"><div style="width:${solvedChallenges.size/challenges.length*100}%;background:var(--y)"></div></div>
+    </div>
+  `;
+}
+
+// ======================== INIT ========================
+function initAll(){initWarRoom();initRansomware();initCTF()}
+addEventListener('DOMContentLoaded',boot);
+</script>
+</body>
+</html>
